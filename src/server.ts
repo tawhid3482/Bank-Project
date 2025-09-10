@@ -3,6 +3,7 @@ import { Server } from "http";
 import app from "./app";
 import mongoose from "mongoose";
 import { envVars } from "./app/config/env";
+import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 let server: Server;
 
 const bankStart = async () => {
@@ -17,7 +18,10 @@ const bankStart = async () => {
   }
 };
 
-bankStart();
+(async () => {
+ await bankStart();
+ await seedSuperAdmin();
+})();
 
 process.on("SIGTERM", () => {
   console.log("SIGTERM received! Server is Shutting down...");
