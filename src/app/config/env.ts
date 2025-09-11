@@ -11,6 +11,9 @@ interface EnvVars {
   BCRYPT_SALT_ROUND: string;
   SUPER_ADMIN_EMAIL: string;
   SUPER_ADMIN_PASS: string;
+  JWT_REFRESH_SECRET:string;
+  JWT_REFRESH_EXPIRED:string;
+
 }
 
 const loadEnvVariables = (): EnvVars => {
@@ -23,6 +26,8 @@ const loadEnvVariables = (): EnvVars => {
     "BCRYPT_SALT_ROUND",
     "SUPER_ADMIN_EMAIL",
     "SUPER_ADMIN_PASS",
+    "JWT_REFRESH_SECRET",
+    "JWT_REFRESH_EXPIRED"
   ];
   requiredVars.forEach((key) => {
     if (!process.env[key]) {
@@ -40,6 +45,8 @@ const loadEnvVariables = (): EnvVars => {
     BCRYPT_SALT_ROUND: process.env.BCRYPT_SALT_ROUND as string,
     SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL as string,
     SUPER_ADMIN_PASS: process.env.SUPER_ADMIN_PASS as string,
+    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
+    JWT_REFRESH_EXPIRED: process.env.JWT_REFRESH_EXPIRED as string,
   };
 };
 

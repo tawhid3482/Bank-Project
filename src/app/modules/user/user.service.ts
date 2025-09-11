@@ -46,13 +46,6 @@ const updateUserInfoDB = async (
   if (!isUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found!");
   }
-  // if (
-  //   isUserExist.isActive === "INACTIVE" ||
-  //   isUserExist.isActive === "BLOCKED" ||
-  //   isUserExist.isDeleted
-  // ) {
-  //   throw new AppError(httpStatus.FORBIDDEN, "YOu can not update your password!");
-  // }
 
   if (payload.role) {
     if (decodedToken.role === Role.USER) {

@@ -15,6 +15,7 @@ export enum IsActive {
 } 
 
 export type TUser = {
+  _id?:string
   phone: string;
   email: string;
   password: string;
