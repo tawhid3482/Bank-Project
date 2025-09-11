@@ -1,10 +1,14 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import AppError from "../../errorHelpers/AppError";
 import { TUser } from "../user/user.interface";
 import { User } from "../user/user.model";
 import httpStatus from "http-status-codes";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken"
-import { generateToken } from "../../utils/jwt";
+import {
+  createNewAccessTokenWithRefreshToken,
+  createUserToken,
+} from "../../utils/userToken";
+import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 
 const userLogin = async (payload: Partial<TUser>) => {
@@ -24,21 +28,55 @@ const userLogin = async (payload: Partial<TUser>) => {
     throw new AppError(httpStatus.CONFLICT, "incorrect password");
   }
 
-  const jwtPayload = {
-    id:isUserExist._id,
-    email:isUserExist.email,
-    role:isUserExist.role
-  }
-
-  const accessToken= generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET, envVars.JWT_EXPIRES_IN)
-
+  const userTokens = createUserToken(isUserExist);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: pass, ...rest } = isUserExist.toObject();
 
   return {
-    accessToken,
+    accessToken: userTokens.accessToken,
+    refreshToken: userTokens.refreshToken,
+    user: rest,
   };
 };
 
+const getNewAccessToken = async (refreshToken: string) => {
+  const newAccessToken = await createNewAccessTokenWithRefreshToken(
+    refreshToken
+  );
+  return {
+    accessToken: newAccessToken,
+  };
+};
+
+const resetPassword = async (
+  oldPassword: string,
+  newPassword: string,
+  decodedToken: JwtPayload
+) => {
+
+  
+  const user = await User.findById(decodedToken.id);  
+  const isPasswordMatch = await bcrypt.compare(
+    oldPassword,
+    user!.password as string
+  );
+
+
+  if (!isPasswordMatch) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Password does not match");
+  }
+
+  user!.password = await bcrypt.hash(
+    newPassword,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
+
+  user?.save();
+
+};
 
 export const authService = {
   userLogin,
+  getNewAccessToken,
+  resetPassword,
 };
