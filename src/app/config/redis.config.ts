@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { createClient } from 'redis';
 import { envVars } from './env';
 

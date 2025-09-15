@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = __importDefault(require("./app"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const env_1 = require("./app/config/env");
+const seedSuperAdmin_1 = require("./app/utils/seedSuperAdmin");
+const redis_config_1 = require("./app/config/redis.config");
 let server;
 const bankStart = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -27,7 +29,11 @@ const bankStart = () => __awaiter(void 0, void 0, void 0, function* () {
         console.log(err);
     }
 });
-bankStart();
+(() => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, redis_config_1.connectRedis)();
+    yield bankStart();
+    yield (0, seedSuperAdmin_1.seedSuperAdmin)();
+}))();
 process.on("SIGTERM", () => {
     console.log("SIGTERM received! Server is Shutting down...");
     if (server) {

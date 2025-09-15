@@ -3,8 +3,6 @@ import { User } from "../user/user.model";
 import AppError from "../../errorHelpers/AppError";
 import { redisClient } from "../../config/redis.config";
 import { sendEmail } from "../../utils/sendEmail";
-import { envVars } from "../../config/env";
-import bcrypt from 'bcryptjs'
 const OTP_EXPIRATION = 2 * 60 // 2minute
 
 const generateOtp = (length = 6) => {
@@ -82,10 +80,10 @@ const sendOTP = async (email: string) => {
 // };
 
 
-const verifyOTPAndResetPassword = async (
+const verifyOTP = async (
   email: string,
   otp: string,
-  newPassword: string
+  // newPassword: string
 ) => {
   // Step 1: User খুঁজে বের করা
   const user = await User.findOne({ email });
@@ -105,14 +103,8 @@ const verifyOTPAndResetPassword = async (
     throw new AppError(401, "Invalid OTP");
   }
 
-  // Step 3: Password Hash করা
-  const hashedPassword = await bcrypt.hash(
-    newPassword,
-    Number(envVars.BCRYPT_SALT_ROUND)
-  );
-
-  // Step 4: User password update করা
-  user.password = hashedPassword;
+  // // Step 4: User isOTPVerified update করা
+  user.isOTPVerified = true
   await user.save();
 
   // Step 5: Redis থেকে OTP মুছে ফেলা
@@ -120,10 +112,10 @@ const verifyOTPAndResetPassword = async (
 
   return {
     success: true,
-    message: "Password reset successfully",
+    message: "OTP verified successfully",
   };
 };
 export const OTPService = {
     sendOTP,
-    verifyOTPAndResetPassword
+    verifyOTP
 }
