@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import bcryptjs from "bcryptjs";
 import { User } from "../modules/user/user.model";
 import { envVars } from "../config/env";
@@ -29,7 +30,7 @@ export const seedSuperAdmin = async () => {
     };
 
     const superadmin = await User.create(payload);
-    console.log("Super Admin Created Successfuly! ");
+    console.log("Super Admin Created Successfully! ");
     console.log(superadmin);
   } catch (error) {
     console.log(error);

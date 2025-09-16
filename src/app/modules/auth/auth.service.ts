@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import AppError from "../../errorHelpers/AppError";
 import { IsActive, TUser } from "../user/user.interface";
@@ -51,16 +50,21 @@ const getNewAccessToken = async (refreshToken: string) => {
 };
 
 const resetPassword = async (
-  payload: Record<string, any>,
-  decodedToken: JwtPayload
+  payload: {email:string, newPassword:string},
 ) => {
-  if (payload.id != decodedToken.userId) {
-    throw new AppError(401, "You can not reset your password");
-  }
+  // if (payload.id != decodedToken.userId) {
+  //   throw new AppError(401, "You can not reset your password");
+  // }
 
-  const isUserExist = await User.findById(decodedToken.userId);
+  const isUserExist = await User.findOne({email:payload.email});
   if (!isUserExist) {
     throw new AppError(401, "User does not exist");
+  }
+  if (isUserExist.isDeleted) {
+    throw new AppError(401, "User already deleted");
+  }
+  if (!isUserExist.isOTPVerified) {
+    throw new AppError(401, "Your OTP is not verified");
   }
 
   const hashedPassword = await bcrypt.hash(
@@ -69,6 +73,8 @@ const resetPassword = async (
   );
 
   isUserExist.password = hashedPassword;
+
+  isUserExist.isOTPVerified =false
 
   await isUserExist.save();
 };

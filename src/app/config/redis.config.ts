@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { createClient } from 'redis';
 import { envVars } from './env';
 
@@ -25,4 +26,5 @@ export const connectRedis = async () => {
         console.log("Redis Connected");
     }
 }
+export const redisSubscriber = redisClient.duplicate();
 

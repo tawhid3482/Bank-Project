@@ -12,6 +12,7 @@ const userSchema = new Schema<TUser>(
       default: Role.USER,
     },
     isDeleted: { type: Boolean, default: false },
+    isOTPVerified: { type: Boolean, default: false },
     isActive: {
       type: String,
       enum: Object.values(IsActive),

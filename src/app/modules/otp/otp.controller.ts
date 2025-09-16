@@ -16,8 +16,8 @@ const sendOTP = catchAsync(async (req: Request, res: Response) => {
 })
 
 const verifyOTP = catchAsync(async (req: Request, res: Response) => {
-    const { email, otp,newPassword } = req.body;
-    await OTPService.verifyOTPAndResetPassword(email, otp, newPassword)
+    const { email, otp } = req.body;
+    await OTPService.verifyOTP(email, otp)
     sendResponse(res, {
         statusCode: 200,
         success: true,
