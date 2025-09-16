@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { envVars } from "./app/config/env";
 import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 import { connectRedis } from "./app/config/redis.config";
+import { initOtpExpireListener } from "./app/modules/otp/otp..service";
 let server: Server;
 
 const bankStart = async () => {
@@ -21,6 +22,7 @@ const bankStart = async () => {
 
 (async () => {
   await connectRedis()
+  await initOtpExpireListener()
  await bankStart();
  await seedSuperAdmin();
 })();

@@ -60,7 +60,7 @@ const resetPassword = async (
   if (!isUserExist) {
     throw new AppError(401, "User does not exist");
   }
-  if (!isUserExist.isDeleted) {
+  if (isUserExist.isDeleted) {
     throw new AppError(401, "User already deleted");
   }
   if (!isUserExist.isOTPVerified) {

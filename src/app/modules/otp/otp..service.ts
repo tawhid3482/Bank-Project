@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { User } from "../user/user.model";
 import AppError from "../../errorHelpers/AppError";
-import { redisClient } from "../../config/redis.config";
+import { redisClient, redisSubscriber } from "../../config/redis.config";
 import { sendEmail } from "../../utils/sendEmail";
 const OTP_EXPIRATION = 2 * 60 // 2minute
 
@@ -80,42 +80,93 @@ const sendOTP = async (email: string) => {
 // };
 
 
-const verifyOTP = async (
-  email: string,
-  otp: string,
-  // newPassword: string
-) => {
-  // Step 1: User খুঁজে বের করা
+// const verifyOTP = async (
+//   email: string,
+//   otp: string,
+//   // newPassword: string
+// ) => {
+//   // Step 1: User খুঁজে বের করা
+//   const user = await User.findOne({ email });
+//   if (!user) {
+//     throw new AppError(404, "User not found");
+//   }
+
+//   if (user.isDeleted) {
+//     throw new AppError(401, "You are already deleted");
+//   }
+
+//   // Step 2: Redis থেকে OTP চেক করা
+//   const redisKey = `otp:${email}`;
+//   const savedOtp = await redisClient.get(redisKey);
+
+//   if (!savedOtp || savedOtp !== otp) {
+//     throw new AppError(401, "Invalid OTP");
+//   }
+
+//   // // Step 4: User isOTPVerified update করা
+//   user.isOTPVerified = true
+//   await user.save();
+
+//   // Step 5: Redis থেকে OTP মুছে ফেলা
+//   await redisClient.del(redisKey);
+
+//   return {
+//     success: true,
+//     message: "OTP verified successfully",
+//   };
+// };
+
+
+
+const verifyOTP = async (email: string, otp: string) => {
   const user = await User.findOne({ email });
-  if (!user) {
-    throw new AppError(404, "User not found");
-  }
+  if (!user) throw new AppError(404, "User not found");
+  if (user.isDeleted) throw new AppError(401, "You are already deleted");
 
-  if (user.isDeleted) {
-    throw new AppError(401, "You are already deleted");
-  }
-
-  // Step 2: Redis থেকে OTP চেক করা
+  // OTP চেক
   const redisKey = `otp:${email}`;
   const savedOtp = await redisClient.get(redisKey);
-
   if (!savedOtp || savedOtp !== otp) {
     throw new AppError(401, "Invalid OTP");
   }
 
-  // // Step 4: User isOTPVerified update করা
-  user.isOTPVerified = true
+  // verified
+  user.isOTPVerified = true;
   await user.save();
 
-  // Step 5: Redis থেকে OTP মুছে ফেলা
   await redisClient.del(redisKey);
+
+  // expire flag set করা (2 min)
+  const expireKey = `otpVerifiedExpire:${email}`;
+  await redisClient.set(expireKey, "true", { EX: 120 });
 
   return {
     success: true,
-    message: "OTP verified successfully",
+    message: "OTP verified successfully, valid for 2 minutes",
   };
 };
+
+// 🔹 Redis expire event listener (একবারই app boot এ call করবে)
+export const initOtpExpireListener = async () => {
+  await redisSubscriber.connect();
+  await redisSubscriber.configSet("notify-keyspace-events", "Ex");
+  await redisSubscriber.subscribe("__keyevent@0__:expired", async (key) => {
+    if (key.startsWith("otpVerifiedExpire:")) {
+      const email = key.split(":")[1];
+      const freshUser = await User.findOne({ email });
+      if (freshUser) {
+        freshUser.isOTPVerified = false;
+        await freshUser.save();
+        console.log(`User ${email} OTP verification expired`);
+      }
+    }
+  });
+};
+
+
+
 export const OTPService = {
     sendOTP,
-    verifyOTP
+    verifyOTP,
+    initOtpExpireListener
 }

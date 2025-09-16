@@ -26,4 +26,5 @@ export const connectRedis = async () => {
         console.log("Redis Connected");
     }
 }
+export const redisSubscriber = redisClient.duplicate();
 
