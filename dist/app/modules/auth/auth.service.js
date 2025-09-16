@@ -24,7 +24,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authService = void 0;
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const user_interface_1 = require("../user/user.interface");
@@ -60,16 +59,23 @@ const getNewAccessToken = (refreshToken) => __awaiter(void 0, void 0, void 0, fu
         accessToken: newAccessToken,
     };
 });
-const resetPassword = (payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
-    if (payload.id != decodedToken.userId) {
-        throw new AppError_1.default(401, "You can not reset your password");
-    }
-    const isUserExist = yield user_model_1.User.findById(decodedToken.userId);
+const resetPassword = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    // if (payload.id != decodedToken.userId) {
+    //   throw new AppError(401, "You can not reset your password");
+    // }
+    const isUserExist = yield user_model_1.User.findOne({ email: payload.email });
     if (!isUserExist) {
         throw new AppError_1.default(401, "User does not exist");
     }
+    if (isUserExist.isDeleted) {
+        throw new AppError_1.default(401, "User already deleted");
+    }
+    if (!isUserExist.isOTPVerified) {
+        throw new AppError_1.default(401, "Your OTP is not verified");
+    }
     const hashedPassword = yield bcryptjs_1.default.hash(payload.newPassword, Number(env_1.envVars.BCRYPT_SALT_ROUND));
     isUserExist.password = hashedPassword;
+    isUserExist.isOTPVerified = false;
     yield isUserExist.save();
 });
 const forgotPassword = (email) => __awaiter(void 0, void 0, void 0, function* () {

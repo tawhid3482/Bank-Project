@@ -12,14 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OTPService = void 0;
+exports.OTPService = exports.initOtpExpireListener = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 const user_model_1 = require("../user/user.model");
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const redis_config_1 = require("../../config/redis.config");
 const sendEmail_1 = require("../../utils/sendEmail");
-const env_1 = require("../../config/env");
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const OTP_EXPIRATION = 2 * 60; // 2minute
 const generateOtp = (length = 6) => {
     //6 digit otp
@@ -75,34 +73,77 @@ const sendOTP = (email) => __awaiter(void 0, void 0, void 0, function* () {
 //         redisClient.del([redisKey])
 //     ])
 // };
-const verifyOTPAndResetPassword = (email, otp, newPassword) => __awaiter(void 0, void 0, void 0, function* () {
-    // Step 1: User খুঁজে বের করা
+// const verifyOTP = async (
+//   email: string,
+//   otp: string,
+//   // newPassword: string
+// ) => {
+//   // Step 1: User খুঁজে বের করা
+//   const user = await User.findOne({ email });
+//   if (!user) {
+//     throw new AppError(404, "User not found");
+//   }
+//   if (user.isDeleted) {
+//     throw new AppError(401, "You are already deleted");
+//   }
+//   // Step 2: Redis থেকে OTP চেক করা
+//   const redisKey = `otp:${email}`;
+//   const savedOtp = await redisClient.get(redisKey);
+//   if (!savedOtp || savedOtp !== otp) {
+//     throw new AppError(401, "Invalid OTP");
+//   }
+//   // // Step 4: User isOTPVerified update করা
+//   user.isOTPVerified = true
+//   await user.save();
+//   // Step 5: Redis থেকে OTP মুছে ফেলা
+//   await redisClient.del(redisKey);
+//   return {
+//     success: true,
+//     message: "OTP verified successfully",
+//   };
+// };
+const verifyOTP = (email, otp) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findOne({ email });
-    if (!user) {
+    if (!user)
         throw new AppError_1.default(404, "User not found");
-    }
-    if (user.isDeleted) {
+    if (user.isDeleted)
         throw new AppError_1.default(401, "You are already deleted");
-    }
-    // Step 2: Redis থেকে OTP চেক করা
+    // OTP চেক
     const redisKey = `otp:${email}`;
     const savedOtp = yield redis_config_1.redisClient.get(redisKey);
     if (!savedOtp || savedOtp !== otp) {
         throw new AppError_1.default(401, "Invalid OTP");
     }
-    // Step 3: Password Hash করা
-    const hashedPassword = yield bcryptjs_1.default.hash(newPassword, Number(env_1.envVars.BCRYPT_SALT_ROUND));
-    // Step 4: User password update করা
-    user.password = hashedPassword;
+    // verified
+    user.isOTPVerified = true;
     yield user.save();
-    // Step 5: Redis থেকে OTP মুছে ফেলা
     yield redis_config_1.redisClient.del(redisKey);
+    // expire flag set করা (2 min)
+    const expireKey = `otpVerifiedExpire:${email}`;
+    yield redis_config_1.redisClient.set(expireKey, "true", { EX: 120 });
     return {
         success: true,
-        message: "Password reset successfully",
+        message: "OTP verified successfully, valid for 2 minutes",
     };
 });
+// 🔹 Redis expire event listener (একবারই app boot এ call করবে)
+const initOtpExpireListener = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield redis_config_1.redisSubscriber.connect();
+    yield redis_config_1.redisSubscriber.configSet("notify-keyspace-events", "Ex");
+    yield redis_config_1.redisSubscriber.subscribe("__keyevent@0__:expired", (key) => __awaiter(void 0, void 0, void 0, function* () {
+        if (key.startsWith("otpVerifiedExpire:")) {
+            const email = key.split(":")[1];
+            const freshUser = yield user_model_1.User.findOne({ email });
+            if (freshUser) {
+                freshUser.isOTPVerified = false;
+                yield freshUser.save();
+            }
+        }
+    }));
+});
+exports.initOtpExpireListener = initOtpExpireListener;
 exports.OTPService = {
     sendOTP,
-    verifyOTPAndResetPassword
+    verifyOTP,
+    initOtpExpireListener: exports.initOtpExpireListener
 };

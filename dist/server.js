@@ -17,6 +17,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const env_1 = require("./app/config/env");
 const seedSuperAdmin_1 = require("./app/utils/seedSuperAdmin");
 const redis_config_1 = require("./app/config/redis.config");
+const otp__service_1 = require("./app/modules/otp/otp..service");
 let server;
 const bankStart = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -31,6 +32,7 @@ const bankStart = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 (() => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, redis_config_1.connectRedis)();
+    yield (0, otp__service_1.initOtpExpireListener)();
     yield bankStart();
     yield (0, seedSuperAdmin_1.seedSuperAdmin)();
 }))();

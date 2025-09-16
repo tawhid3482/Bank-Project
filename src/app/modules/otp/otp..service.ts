@@ -157,7 +157,6 @@ export const initOtpExpireListener = async () => {
       if (freshUser) {
         freshUser.isOTPVerified = false;
         await freshUser.save();
-        console.log(`User ${email} OTP verification expired`);
       }
     }
   });

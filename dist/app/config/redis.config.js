@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.connectRedis = exports.redisClient = void 0;
+exports.redisSubscriber = exports.connectRedis = exports.redisClient = void 0;
 /* eslint-disable no-console */
 const redis_1 = require("redis");
 const env_1 = require("./env");
@@ -32,3 +32,4 @@ const connectRedis = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.connectRedis = connectRedis;
+exports.redisSubscriber = exports.redisClient.duplicate();

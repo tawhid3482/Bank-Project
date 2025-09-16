@@ -23,5 +23,5 @@ export type TUser = {
   isDeleted?: boolean;
   isActive?:IsActive ;
   loan?:Types.ObjectId[]
-  isOTPVerified:boolean
+  isOTPVerified?:boolean
 }
