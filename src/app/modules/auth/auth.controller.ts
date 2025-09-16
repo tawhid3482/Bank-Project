@@ -7,16 +7,18 @@ import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
 import { setAuthCookie } from "../../utils/setCookie";
 import { JwtPayload } from "jsonwebtoken";
+import { envVars } from "../../config/env";
 
 const userLogin = catchAsync(async (req: Request, res: Response) => {
   const result = await authService.userLogin(req.body);
 
   setAuthCookie(res, result);
 
-  // res.cookie("refreshToken", result.refreshToken, {
-  //   httpOnly: true,
-  //   secure: false,
-  // });
+  res.cookie("refreshToken", result.refreshToken, {
+    httpOnly: true,
+    secure: envVars.NODE_ENV === "production",
+    sameSite: "none",
+  });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

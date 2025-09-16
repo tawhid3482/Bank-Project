@@ -24,8 +24,8 @@ const sendOTP = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, voi
     });
 }));
 const verifyOTP = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, otp, newPassword } = req.body;
-    yield otp__service_1.OTPService.verifyOTPAndResetPassword(email, otp, newPassword);
+    const { email, otp } = req.body;
+    yield otp__service_1.OTPService.verifyOTP(email, otp);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: 200,
         success: true,

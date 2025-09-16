@@ -11,5 +11,5 @@ router.post("/refresh-token", auth_controller_1.authController.getNewAccessToken
 router.post("/logout", auth_controller_1.authController.logout);
 router.post("/change-password", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), auth_controller_1.authController.changePassword);
 // router.post("/forgot-password", authController.forgotPassword)
-router.post("/reset-password", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), auth_controller_1.authController.resetPassword);
+router.post("/reset-password", auth_controller_1.authController.resetPassword);
 exports.authRoute = router;

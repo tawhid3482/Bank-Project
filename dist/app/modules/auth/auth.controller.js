@@ -19,13 +19,15 @@ const sendResponse_1 = require("../../utils/sendResponse");
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const setCookie_1 = require("../../utils/setCookie");
+const env_1 = require("../../config/env");
 const userLogin = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield auth_service_1.authService.userLogin(req.body);
     (0, setCookie_1.setAuthCookie)(res, result);
-    // res.cookie("refreshToken", result.refreshToken, {
-    //   httpOnly: true,
-    //   secure: false,
-    // });
+    res.cookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: env_1.envVars.NODE_ENV === "production",
+        sameSite: "none",
+    });
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.OK,
         success: true,
@@ -76,12 +78,11 @@ const changePassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaite
     });
 }));
 const resetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const decodedToken = req.user;
-    yield auth_service_1.authService.resetPassword(req.body, decodedToken);
+    yield auth_service_1.authService.resetPassword(req.body);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
-        message: "Password Changed Successfully",
+        message: "Password Reset Successfully",
         data: null,
     });
 }));

@@ -13,6 +13,7 @@ const userSchema = new mongoose_1.Schema({
         default: user_interface_1.Role.USER,
     },
     isDeleted: { type: Boolean, default: false },
+    isOTPVerified: { type: Boolean, default: false },
     isActive: {
         type: String,
         enum: Object.values(user_interface_1.IsActive),
