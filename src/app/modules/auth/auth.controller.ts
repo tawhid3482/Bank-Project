@@ -14,11 +14,11 @@ const userLogin = catchAsync(async (req: Request, res: Response) => {
 
   setAuthCookie(res, result);
 
-  res.cookie("refreshToken", result.refreshToken, {
-    httpOnly: true,
-    secure: envVars.NODE_ENV === "production",
-    sameSite: "none",
-  });
+  // res.cookie("refreshToken", result.refreshToken, {
+  //   httpOnly: true,
+  //   secure: envVars.NODE_ENV === "production",
+  //   sameSite: "none",
+  // });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

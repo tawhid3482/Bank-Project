@@ -34,6 +34,7 @@ const seedSuperAdmin = () => __awaiter(void 0, void 0, void 0, function* () {
             email: env_1.envVars.SUPER_ADMIN_EMAIL,
             password: hashedPassword,
             phone: "0126586455",
+            isOTPVerified: false
         };
         const superadmin = yield user_model_1.User.create(payload);
         console.log("Super Admin Created Successfully! ");
