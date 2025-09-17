@@ -45,8 +45,21 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.user;
+  const result = await userServices.getMe(id)
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Personal info retrieved successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
   getAllUsers,
-  updateUser
+  updateUser,
+  getMe
 };

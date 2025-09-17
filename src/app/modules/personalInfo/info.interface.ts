@@ -23,7 +23,7 @@ export interface TFinancialInfo {
   landOwned: number;
   electricityBill: number;
   mobileBill: number;
-  existingLoan: boolean;
+  existingLoan?: number;
 }
 
 export interface TAnnualRange {
@@ -55,6 +55,6 @@ export interface TPersonalInfo {
   debtToIncomeRatio?: string;
   totalDebt?: number;
   monthlyIncome?: number;
-  annualInfo?: TAnnualRange;
+  j?: TAnnualRange;
   status: Status
 }

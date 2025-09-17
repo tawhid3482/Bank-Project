@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
@@ -12,9 +11,9 @@ import { handlerZodError } from "../helpers/handleZodError";
 import { handlerValidationError } from "../helpers/handleValidationError";
 
 export const globalErrorHandler = async (err: any, req: Request, res: Response, next: NextFunction) => {
-    if (envVars.NODE_ENV === "development") {
-        console.log(err);
-    }
+    // if (envVars.NODE_ENV === "development") {
+    //     console.log(err);
+    // }
 
     let errorSources: TErrorSources[] = []
     let statusCode = 500

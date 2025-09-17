@@ -8,25 +8,16 @@ import { QueryBuilder } from "../../utils/queryBuilder";
 import { Role } from "../user/user.interface";
 
 const calculateCreditScore = (
-  income: number, // annual income
-  landOwned: number, // annual value / land worth
-  electricityBill: number, // monthly
-  mobileBill: number // monthly
-): {
-  score: number;
-  remaining: number;
-  category: string;
-  debtToIncomeRatio: string;
-  monthlyIncome: number;
-  totalDebt: number;
-} => {
-  
-  const monthlyIncome = (income + landOwned) / 12; // Annual → Monthly
-  const totalDebt = electricityBill + mobileBill; // Monthly expense
-
+  income: number,
+  landOwned: number,
+  electricityBill: number,
+  mobileBill: number,
+  existingLoan: number
+) => {
+  const monthlyIncome = (income + landOwned) / 12;
+  const totalDebt = electricityBill + mobileBill + existingLoan;
   const remaining = monthlyIncome - totalDebt;
 
-  // Debt-to-Income Ratio (%) with 2 decimal points
   const debtToIncomeRatio =
     monthlyIncome > 0
       ? ((totalDebt / monthlyIncome) * 100).toFixed(2) + "%"
@@ -43,11 +34,9 @@ const calculateCreditScore = (
     };
   }
 
-  // Score scaled out of 100 (cap at 100)
   let score = (remaining / 100000) * 100;
   if (score > 100) score = 100;
 
-  // Category mapping
   let category = "Very Poor";
   if (remaining >= 100000) category = "Excellent";
   else if (remaining >= 50000) category = "Good";
@@ -64,47 +53,51 @@ const calculateCreditScore = (
   };
 };
 
-const createPersonalInfoIntoDB = async (payload: TPersonalInfo) => {
+export const createPersonalInfoIntoDB = async (payload: TPersonalInfo) => {
   const isUserExist = await User.findById(payload.userId);
+
   if (!isUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
-
-  const { income, landOwned, electricityBill, mobileBill } =
-    payload.financialInfo;
-
-  // Generate Credit Score + Category + DTI
-  const { score, debtToIncomeRatio, monthlyIncome, totalDebt } =
-    calculateCreditScore(income, landOwned, electricityBill, mobileBill);
-
-  // Save calculated fields into payload
-  payload.creditScore = String(score); // schema তে String আছে
-  payload.debtToIncomeRatio = debtToIncomeRatio; // percentage string
-  payload.totalDebt = totalDebt;
-  payload.monthlyIncome = monthlyIncome;
-
-  // Calculate annual info percentages
-  const annualIncome = income + landOwned;
-  const annualElectricityBill = electricityBill * 12;
-  const annualMobileBill = mobileBill * 12;
-
-  const annualIncomeRange = annualIncome - (electricityBill + mobileBill);
-
-  if (annualIncomeRange > 100000) {
-    return 100;
+  const isInfoExist = await personalInfo.findOne({ userId: payload.userId });
+  if (isInfoExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "Info Already exists");
   }
 
+  const { income, landOwned, electricityBill, mobileBill, existingLoan } =
+    payload.financialInfo;
+
+  const { score, debtToIncomeRatio, monthlyIncome, totalDebt } =
+    calculateCreditScore(
+      income,
+      landOwned,
+      electricityBill,
+      mobileBill,
+      existingLoan ?? 0
+    );
+
+  payload.creditScore = String(score);
+  payload.debtToIncomeRatio = debtToIncomeRatio;
+  payload.totalDebt = totalDebt;
+  payload.monthlyIncome = Number(monthlyIncome.toFixed(2));
+
+  const annualIncome = income + landOwned;
+  // const annualElectricityBill = electricityBill * 12;
+  // const annualMobileBill = mobileBill * 12;
+
+  // const annualIncomeRange =
+  //   annualIncome - (electricityBill + mobileBill + (existingLoan ?? 0));
+
   payload.annualInfo = {
-    annualIncome: Number((annualIncomeRange / 1000).toFixed(2)),
+    annualIncome: Number((annualIncome).toFixed(2)),
     annualElectricityBill: Number(
-      ((annualElectricityBill / annualIncome) * 100).toFixed(2)
+      (electricityBill).toFixed(2)
     ),
     annualMobileBill: Number(
-      ((annualMobileBill / annualIncome) * 100).toFixed(2)
+      (mobileBill).toFixed(2)
     ),
   };
 
-  // Save in DB
   const result = await personalInfo.create(payload);
   return result;
 };
@@ -144,16 +137,13 @@ const getMe = async (userId: string) => {
 
   const info = await personalInfo
     .findOne({ userId })
-    .select("firstName lastName contact");
 
   if (!info) {
     throw new AppError(httpStatus.NOT_FOUND, "Personal info not found");
   }
 
   return {
-    firstName: info.firstName,
-    lastName: info.lastName,
-    contact: info.contact,
+    info,
     phone: user.phone,
     email: user.email,
   };
@@ -300,19 +290,32 @@ const requestLoanSetInfoDB = async (
 
 const updatePersonalInfoInfoDB = async (
   userId: string,
-  payload: Partial<TPersonalInfo>
+  payload: Partial<TPersonalInfo> & { phone?: string }
 ) => {
+  // প্রথমে PersonalInfo update
   await personalInfo.findOneAndUpdate(
     { userId },
     { $set: payload },
     { new: true }
   );
+
+  // যদি phone আসে, তাহলে User এ update করব
+  if (payload.phone) {
+    await User.findOneAndUpdate(
+      { _id: userId },
+      { $set: { phone: payload.phone } },
+      { new: true }
+    );
+  }
+
   return payload;
 };
 
-const approvedLoan = async (userId: string, payload: Partial<TApproved>) => {
-  const result = await personalInfo.findOneAndUpdate(
-    { userId },
+
+const approvedLoan = async (id: string, payload: Partial<TApproved>) => {
+  
+  const result = await personalInfo.findByIdAndUpdate(
+     id ,
     {
       $set: {
         isApproved: payload,
@@ -327,11 +330,11 @@ const approvedLoan = async (userId: string, payload: Partial<TApproved>) => {
 };
 
 const rejectYourLoan = async (
-  userId: string,
+  id: string,
   payload: { rejectedNotes: string }
 ) => {
-  const result = await personalInfo.findOneAndUpdate(
-    { userId },
+  const result = await personalInfo.findByIdAndUpdate(
+    id ,
     {
       $set: {
         rejectedNotes: payload.rejectedNotes,
