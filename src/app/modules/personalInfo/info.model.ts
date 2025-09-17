@@ -27,7 +27,7 @@ const financialInfoSchema = new Schema<TFinancialInfo>(
     landOwned: { type: Number, required: true },
     electricityBill: { type: Number, required: true },
     mobileBill: { type: Number, required: true },
-    existingLoan: { type: Boolean, required: true },
+    existingLoan: { type: Number,  },
   },
   {
     _id: false,

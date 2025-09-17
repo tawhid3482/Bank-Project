@@ -12,6 +12,11 @@ router.post(
   validateRequest(userValidation.userValidationSchema),
   UserController.createUser
 );
+
+router.get("/me", checkAuth(...Object.values(Role)), UserController.getMe);
+
+router.get("/all-users", UserController.getAllUsers);
+
 router.patch(
   "/:id",
   checkAuth(...Object.values(Role)),
@@ -19,6 +24,6 @@ router.patch(
   UserController.updateUser
 );
 
-router.get("/all-users", UserController.getAllUsers);
+
 
 export const UserRoutes = router;

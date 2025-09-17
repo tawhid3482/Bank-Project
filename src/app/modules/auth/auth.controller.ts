@@ -65,56 +65,54 @@ const logout = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-const changePassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
+const changePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
     const newPassword = req.body.newPassword;
     const oldPassword = req.body.oldPassword;
-    const decodedToken = req.user
+    const decodedToken = req.user;
 
-    await authService.changePassword(oldPassword, newPassword, decodedToken as JwtPayload);
+    await authService.changePassword(
+      oldPassword,
+      newPassword,
+      decodedToken as JwtPayload
+    );
 
     sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "Password Changed Successfully",
-        data: null,
-    })
-})
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Password Changed Successfully",
+      data: null,
+    });
+  }
+);
 
-const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
+const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
     await authService.resetPassword(req.body);
 
     sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "Password Reset Successfully",
-        data: null,
-    })
-})
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Password Reset Successfully",
+      data: null,
+    });
+  }
+);
 
-const forgotPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-
+const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.body;
 
     await authService.forgotPassword(email);
 
     sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "Email Sent Successfully",
-        data: null,
-    })
-})
-
-
-
-
-
-
-
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Email Sent Successfully",
+      data: null,
+    });
+  }
+);
 
 export const authController = {
   userLogin,

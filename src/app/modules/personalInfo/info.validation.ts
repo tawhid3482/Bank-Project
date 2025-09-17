@@ -18,7 +18,7 @@ const financialInfoValidationSchema = z.object({
   landOwned: z.number().nonnegative("Land owned must be positive"),
   electricityBill: z.number().nonnegative("Electricity bill must be positive"),
   mobileBill: z.number().nonnegative("Mobile bill must be positive"),
-  existingLoan: z.boolean(),
+  existingLoan: z.number(),
 });
 
 // Personal Info Validation
@@ -53,12 +53,13 @@ export const updatePersonalInfoValidationSchema = z
     lastName: z.string().min(1, "Last name is required").optional(),
     dateOfBirth: z
       .string()
-      .refine((val) => !isNaN(Date.parse(val)), {
+      .refine((val) => !isNaN(Date.parse(val)), { 
         message: "Invalid date format",
       })
       .optional(),
     gender: GenderEnum.optional(),
     contact: contactValidationSchema.optional(),
+    phone:z.string().optional()
   })
   .strict();
 

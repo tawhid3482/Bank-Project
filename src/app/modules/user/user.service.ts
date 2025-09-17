@@ -80,8 +80,23 @@ const updateUserInfoDB = async (
   return newUpdateUser;
 };
 
+const getMe = async (userId: string) => {
+  const user = await User.findById(userId).select("email _id role");
+
+  if (!user) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Please login first");
+  }
+
+  return {
+    email: user.email,
+    id: user._id,
+    role: user.role,
+  };
+};
+
 export const userServices = {
   createUserService,
   getAllUsersFromDB,
-  updateUserInfoDB
+  updateUserInfoDB,
+  getMe,
 };
