@@ -89,42 +89,33 @@ export const createPersonalInfoIntoDB = async (payload: TPersonalInfo) => {
   //   annualIncome - (electricityBill + mobileBill + (existingLoan ?? 0));
 
   payload.annualInfo = {
-    annualIncome: Number((annualIncome).toFixed(2)),
-    annualElectricityBill: Number(
-      (electricityBill).toFixed(2)
-    ),
-    annualMobileBill: Number(
-      (mobileBill).toFixed(2)
-    ),
+    annualIncome: Number(annualIncome.toFixed(2)),
+    annualElectricityBill: Number(electricityBill.toFixed(2)),
+    annualMobileBill: Number(mobileBill.toFixed(2)),
   };
 
   const result = await personalInfo.create(payload);
   return result;
 };
 
-const getPersonalInfoFromDB = async (userId: string) => {
-  // User theke phone, email niye ashi
-  const user = await User.findById(userId).select("phone email");
+const getPersonalInfoFromDB = async (id: string) => {
+
+ 
+  const info = await personalInfo.findById(id);
+  if (!info) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Personal info not found");
+  }
+
+   const user = await User.findById(info.userId).select("phone email");
+
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, "Please login first");
   }
 
-  // PersonalInfo theke firstName, lastName, contact niye ashi
-  const info = await personalInfo
-    .findOne({ userId })
-    .select("firstName lastName contact");
-
-  if (!info) {
-    throw new AppError(httpStatus.NOT_FOUND, "Personal info not found");
-  }
-
-  // Merge kore result return kori
   return {
-    firstName: info.firstName,
-    lastName: info.lastName,
-    contact: info.contact,
-    phone: user.phone,
-    email: user.email,
+    email:user.email,
+    phone:user.phone,
+   ...info.toObject(),
   };
 };
 
@@ -135,8 +126,7 @@ const getMe = async (userId: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, "Please login first");
   }
 
-  const info = await personalInfo
-    .findOne({ userId })
+  const info = await personalInfo.findOne({ userId });
 
   if (!info) {
     throw new AppError(httpStatus.NOT_FOUND, "Personal info not found");
@@ -311,11 +301,9 @@ const updatePersonalInfoInfoDB = async (
   return payload;
 };
 
-
 const approvedLoan = async (id: string, payload: Partial<TApproved>) => {
-  
   const result = await personalInfo.findByIdAndUpdate(
-     id ,
+    id,
     {
       $set: {
         isApproved: payload,
@@ -334,7 +322,7 @@ const rejectYourLoan = async (
   payload: { rejectedNotes: string }
 ) => {
   const result = await personalInfo.findByIdAndUpdate(
-    id ,
+    id,
     {
       $set: {
         rejectedNotes: payload.rejectedNotes,

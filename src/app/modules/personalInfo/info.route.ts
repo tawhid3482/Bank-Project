@@ -45,7 +45,7 @@ router.patch(
 
 router.get(
   "/:id",
-  checkAuth(...Object.values(Role)),
+  checkAuth(Role.ADMIN,Role.SUPER_ADMIN),
   PersonalInfoController.getPersonalInfo
 );
 

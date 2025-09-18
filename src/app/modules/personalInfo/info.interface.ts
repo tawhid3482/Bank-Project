@@ -41,6 +41,7 @@ export interface TApproved {
 }
 
 export interface TPersonalInfo {
+  annualInfo: { annualIncome: number; annualElectricityBill: number; annualMobileBill: number; };
   userId: Types.ObjectId;
   firstName: string;
   lastName: string;
